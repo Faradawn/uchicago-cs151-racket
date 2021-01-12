@@ -1,8 +1,8 @@
 # Hi. It is Nice to Meet You!
 
 ### My Question Board
-[] What is a project vs. repository?
-[] How to add SSH key?
+- [ ] What is a project vs. repository?
+- [ ] How to add SSH key?
 
 ### A Lovely Quote
 > A thousand half-loves must be forsaken to take one whole heart home.
@@ -19,7 +19,7 @@
 
 ___
 
-Love,
+Love,  
 Faradawn
 
 ___
