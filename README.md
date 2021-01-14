@@ -24,9 +24,8 @@
 
 ___
 
-Love,  
-Faradawn  
-
+*Love,*  
+**Faradawn**
 ___
 
 ![alt text](./src/img/cover.png)
