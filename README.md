@@ -1,5 +1,5 @@
-![alt text][logo] # I am Faradawn. It is Nice to Meet You!
-[logo]: ./src/img/icon_fa.png
+![alt text][logo]   # Hi. It is Nice to Meet You!
+[logo]: ./src/img/icon_faradawm.png
 
 ## My Question Board
 - [ ] Git what is Project vs. Repository?
