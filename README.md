@@ -1,4 +1,5 @@
-# I am Faradawn. It is Nice to Meet You!
+![alt text][logo] # I am Faradawn. It is Nice to Meet You!
+[logo]: ./src/img/icon_fa.png
 
 ## My Question Board
 - [ ] Git what is Project vs. Repository?
@@ -12,22 +13,21 @@
 
 ## Notes for  GitHub
 1. `git add .`
-2. `git commit -a -m ""`
+2. `git commit -a -m " "`
 3. `git push -u origin`
 
 ## More About Me
-[My Personal Website](faradawny.com)  
-[My Video Page] (space.bilibili.com/49683148)  
+[My `Personal Website`](faradawny.com)  
+[My `Video Space`] (space.bilibili.com/49683148)  
 [Project `Solved Chinese`](solvedchinese.org)  
 
 ___
 
 Love,  
 Faradawn  
-1/16/2021 
 
 ___
 
-![image](./src/img/Smile.JPG)
+![alt text](./src/img/cover.png)
 
 
