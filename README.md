@@ -1,5 +1,6 @@
-![alt text][logo]   # Hi. It is Nice to Meet You!
-[logo]: ./src/img/icon_faradawm.png
+![alt text][logo]:
+# Hi. It is Nice to Meet You!
+[logo]: ./src/img/icon_faradawn.png
 
 ## My Question Board
 - [ ] Git what is Project vs. Repository?
