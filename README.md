@@ -3,7 +3,8 @@
 # Hi. It is Nice to Meet You!
 
 ## My Question Board
-- [ ] Git what is Project vs. Repository?
+- [ ] Racket: declare variable in function?
+- [x] Git what is Project vs. Repository?
 - [ ] Git how to add SSH key?
 - [ ] GIt what is GitLab vs GitHub
 - [ ] Racket how to 'sqrt'?
@@ -24,14 +25,14 @@
 
 
 ## More About Me
-[My `Personal Website`](https://www.faradawny.com)  
-[My `Video Space`] (https://space.bilibili.com/49683148)  
-[Project `Solved Chinese`](https://www.solvedchinese.org)  
+My [`Personal Website`](https://www.faradawny.com)  
+My [`Video Space`] (https://space.bilibili.com/49683148)  
+Project [`Solved Chinese`](https://www.solvedchinese.org)  
 
 
 ___
 
-Love,
+Love,  
 **Faradawn**
 ___
 
