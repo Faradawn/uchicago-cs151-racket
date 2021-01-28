@@ -3,6 +3,7 @@
 # Hi. It is Nice to Meet You!
 
 ## My Question Board
+- [ ] Racket: how to do `not equal` `!=`?
 - [ ] Racket: declare variable in function?
 - [x] Git what is Project vs. Repository?
 - [ ] Git how to add SSH key?

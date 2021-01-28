@@ -1,0 +1,28 @@
+#lang typed/racket
+
+(require "../include/cs151-core.rkt")
+(require typed/test-engine/racket-tests)
+
+(define-struct Date
+  ([m : Integer]
+   [d : Integer]
+   [y : Integer]))
+
+;; note: for the month, 1 means January, 2 means February, etc.
+
+(define-struct Day-Of-Week
+  ([num : Integer]))
+
+;; note: 0 means Sunday, 1 means Monday, ..., 6 means Saturday
+
+(: leap? (-> Integer Boolean))
+(define (leap? date)
+  (match date
+    [(Date m d y)
+     (cond
+       [(= (remainder y 4) 0) #t]
+       [(= (remainder y 100) 0) #t]
+       [(= (remainder y 400) 0) #t]
+       )]))
+
+(Date 
