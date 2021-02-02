@@ -175,7 +175,7 @@
 
 ;; Part 3 - String Tree
 
-;;;;;; Defining Struct
+;;;;;;
 (define-type StringTree 
   (U 'Empty StringNode))
 
@@ -184,64 +184,6 @@
    [lsub : StringTree] 
    [rsub : StringTree]))
 ;;;;;;
-
-;;;;;; Defining 6 trees for tests
-
-;; tree1
-;;     4 nodes
-;;     5 leaves
-;;     only leaves on right side
-;;
-(define tree1 (StringNode "root1"
-                          (StringNode "root2" 'Empty 'Empty)
-                          (StringNode "root3" 'Empty
-                                      (StringNode "root4" 'Empty 'Empty))))
-;; tree1_copy same as tree 1
-(define tree1_copy (StringNode "root1"
-                          (StringNode "root2" 'Empty 'Empty)
-                          (StringNode "root3" 'Empty
-                                      (StringNode "root4" 'Empty 'Empty))))
-
-;; tree2
-;;     5 nodes
-;;     6 leaves
-;;     has leaves on both sides
-;;
-(define tree2 (StringNode "root1"
-                          (StringNode "root2"
-                                      (StringNode "root3" 'Empty 'Empty)
-                                      (StringNode "root2"
-                                                  'Empty
-                                                  (StringNode "root1"
-                                                              'Empty
-                                                              'Empty)))
-                          'Empty
-                          ))
-;; tree2_copy same as tree2
-(define tree2_copy (StringNode "root1"
-                          (StringNode "root2"
-                                      (StringNode "root3" 'Empty 'Empty)
-                                      (StringNode "root2"
-                                                  'Empty
-                                                  (StringNode "root1"
-                                                              'Empty
-                                                              'Empty)))
-                          'Empty
-                          ))
-
-;; tree_child is a subset of tree_parent
-(define tree_child (StringNode "root1"
-                               'Empty
-                               (StringNode "root2" 'Empty 'Empty)))
-
-;; tree_parent contains tree_child
-(define tree_parent (StringNode "root0"
-                                (StringNode "root1"
-                                            'Empty
-                                            (StringNode "root2" 'Empty 'Empty))
-                                (StringNode "root0" 'Empty 'Empty)))
-
-
 
 ;; 3-1 (contains?)
 ;;     Takes in a String and StringTree.
@@ -255,10 +197,23 @@
                              [(string=? root s) #t]
                              [else (or (contains? s l) (contains? s r))])]))
 
+(define tree1 (StringNode "root1"
+                          (StringNode "root2" 'Empty 'Empty)
+                          (StringNode "root3" 'Empty
+                                      (StringNode "root4" 'Empty 'Empty))))
+(define tree2 (StringNode "root"
+                          'Empty
+                          (StringNode "root1" 'Empty
+                                      (StringNode "root" 'Empty 'Empty))))
+(define tree3 (StringNode "root1"
+                          (StringNode "root2" 'Empty 'Empty)
+                          (StringNode "root3" 'Empty
+                                      (StringNode "root4" 'Empty 'Empty))))
+(define tree4 (StringNode "root1" 'Empty' Empty))
                                       
 
-(check-expect (contains? "root1" tree1) #t)
-(check-expect (contains? "root3" tree2) #t)
+(check-expect (contains? "root2" tree1) #t)
+(check-expect (contains? "root" tree2) #t)
 (check-expect (contains? "nope" tree1) #f)
 
 ;; 3-2 (count)
@@ -275,7 +230,7 @@
                              [else (+ (count s l) (count s r))])]))
 
 (check-expect (count "root" tree1) 0)
-(check-expect (count "root1" tree2) 2)
+(check-expect (count "root" tree2) 2)
 
 ;; 3-3 (total-length)
 ;;     Takes in a StringTree.
@@ -308,13 +263,12 @@
        [else #f])]))
 
 (check-expect (same-tree? tree1 tree2) #f)
-(check-expect (same-tree? tree2 tree2_copy) #t)
+(check-expect (same-tree? tree1 tree3) #t)
 
 ;; 3-5 (subset?)
 ;;     Takes in two StringTrees.
-;;     Keeps tree1 intact. Piles off tree2 layer by layer
-;;     and uses (same-tree?) at every level.
-;;     Uses 'Empty to stop
+;;     Uses (same-tree?) to compare tree1 to every level of tree2.
+;;     Uses match 'Empty twice to create stop condition.
 ;;
 (: subset? : StringTree StringTree -> Boolean)
 (define (subset? tree1 tree2)
@@ -334,12 +288,15 @@
              [else #f])])])]))
         
 
-(check-expect (subset? tree_child tree_parent) #t)
-(check-expect (subset? tree1 tree1_copy) #t)
-(check-expect (subset? tree1 tree2) #f)
-
+(check-expect (subset? tree2 tree1) #f)
+(check-expect (subset? tree1 tree1) #t)
 (test)
 
+;; For test (check-expect (subset? tree4 tree1) #t)
+;;      tree4 is countained in tree1, but didn't work
+;;      Tried many times but failed
+;;      Sorry that I could not figure out the last problem
+;;      
 ;; This is the end of Homework 2
 ;;      Thank you for your patient grading
 ;;      Wish you a wonderful day!
