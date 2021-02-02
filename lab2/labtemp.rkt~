@@ -1,4 +1,0 @@
-#lang typed/racket
-(require "../include/cs151-core.rkt")
-(require typed/test-engine/racket-tests)
-
