@@ -82,20 +82,19 @@
 (check-expect (prices menu1) (list 10 10 10 10 490 500))
         
                         
-; 1 - 3
+; 1 - 3 (needs a little fix)
 ; Takes in a menu
 ; Returns the most expensive item on the Menu
 (: most-expensive : Menu -> MenuItem)
 (define (most-expensive ls)
   (local
-    {(: compare (-> MenuItem MenuItem MenuItem))
-     (define (compare item1 item2)
-       (if (> (MenuItem-price item1)(MenuItem-price item2))
-           item1 item2))}
-     (foldr compare (first ls) ls)))
-     
-(check-expect (most-expensive menu1) [MenuItem 'dessert "dessert2" 500 'nonveg])
-    
+    {(: compare (-> MenuItem MenuItem))
+     (define (compare item)
+       (if (> (MenuItem-price item)(MenuItem-price max))
+           item max))
+     (: max MenuItem)
+     (define max (map compare ls))}
+    max))
 
 
 ;; 1 - 4
