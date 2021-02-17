@@ -1,0 +1,5 @@
+#lang typed/racket
+
+;; lambda function
+
+(lambda ([x : Real]) (expt x 3) 5)
