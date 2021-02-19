@@ -50,6 +50,14 @@
                20
                8
                (make-list 12 #f)))
+(define world2
+  (CircleWorld 'gray
+               'lightblue
+               'dodgerblue
+               12
+               20
+               8
+               (list #f #t #f #f #f #f #f #f #f #f #f #f)))
 ;; === operations and calculations
 
 (: replace-at : All (A) Integer A (Listof A) -> (Listof A))
@@ -111,10 +119,10 @@
     [(CircleWorld bg c1 c2 num r pad click-ls)
      (local
        {(: stack : Boolean Image -> Image)
-        (define (stack true img)
+        (define (stack true img) 
           (beside
            img
-           (if true (circle r 'solid c2) (circle r 'solid c1)) ;; needs fix
+           (if true (circle r 'solid c2) (circle r 'solid c1))
            (square pad 'solid bg)))}
        (overlay/align
         "right" "center"
@@ -141,12 +149,19 @@
      (match e
        ["button-down" 
         (match (clicked-within (Click x y) world)
-          ['None
+          ['None 
            (CircleWorld bg c1 c2 num r pad (make-list num #f))]
           [(Some n) 
            (CircleWorld bg c1 c2 num r pad (replace-at n #t ls))])]
        [_ world])]))
-            ;; needs to change to (not (nth ls))
+
+;; world1 has 12 #f
+;; world2 has '(#f #t #f #f #f #f #f #f #f #f #f #f)
+(check-expect (react-to-mouse world1 92 40 "button-down") world2)
+(check-expect (react-to-mouse world1 0 0 "button-down") world1) 
+
+
+            
 
 (: run : Image-Color Image-Color Image-Color Integer Integer Integer 
          -> CircleWorld)
@@ -156,7 +171,8 @@
     [to-draw draw]
     [on-mouse react-to-mouse]))
 
-(run 'gray 'lightblue 'dodgerblue 12 20 8)
+; eyeball tests
+;(run 'gray 'lightblue 'dodgerblue 12 20 8)
    
 
 (test)
