@@ -134,7 +134,19 @@
     [11 "November"]
     [12 "December"]
     [_ (error "wrong month number")]))
-    
+;; takes in an Integer and returns that day of week in String
+(: print-day : Integer -> String)
+(define (print-day n)
+  (match n
+    [0 "Sun"]
+    [1 "Mon"]
+    [2 "Tue"]
+    [3 "Wed"]
+    [4 "Thu"]
+    [5 "Fri"]
+    [6 "Sat"]
+    [_ (error "wrong week day")]))
+         
 
 ;; Part 1: draw-month
 ;;         this part includes 6 functions
@@ -146,52 +158,27 @@
 (: title-bar : Integer Integer Integer Image-Color Image-Color Integer
    Image-Color Image-Color Integer -> Image)
 (define (title-bar month year cell bg1 font1 height1 bg2 font2 height2)
-  (above
-   (overlay/align
-    "center" "center"
-    (scale 0.5 (text (string-append (print-month month) " "
-                                    (number->string year))
-          (cast cell Byte) font1))
-    (rectangle (* 7 cell) height1 'outline 'black)
-    (rectangle (* 7 cell) height1 'solid bg1))
-   (beside
-    (overlay/align
-     "center" "center"
-     (scale 0.3 (text "Sun" (cast cell Byte) font2))
-     (rectangle cell height2 'outline 'black)
-     (rectangle cell height2 'solid bg2))
-    (overlay/align
-     "center" "center"
-     (scale 0.3 (text "Mon" (cast cell Byte) font2))
-     (rectangle cell height2 'outline 'black)
-     (rectangle cell height2 'solid bg2))
-    (overlay/align
-     "center" "center"
-     (scale 0.3 (text "Tue" (cast cell Byte) font2))
-     (rectangle cell height2 'outline 'black)
-     (rectangle cell height2 'solid bg2))    
-    (overlay/align
-     "center" "center"
-     (scale 0.3 (text "Wed" (cast cell Byte) font2))
-     (rectangle cell height2 'outline 'black)
-     (rectangle cell height2 'solid bg2))    
-    (overlay/align
-     "center" "center"
-     (scale 0.3 (text "Thu" (cast cell Byte) font2))
-     (rectangle cell height2 'outline 'black)
-     (rectangle cell height2 'solid bg2))    
-    (overlay/align
-     "center" "center"
-     (scale 0.3 (text "Fri" (cast cell Byte) font2))
-     (rectangle cell height2 'outline 'black)
-     (rectangle cell height2 'solid bg2))    
-    (overlay/align
-     "center" "center"
-     (scale 0.3 (text "Sat" (cast cell Byte) font2))
-     (rectangle cell height2 'outline 'black)
-     (rectangle cell height2 'solid bg2)))))
-
+  (local
+    {(: draw-day-cell : Integer Image -> Image)
+     (define (draw-day-cell n img)
+       (beside
+        img
+        (overlay/align
+         "center" "center"
+         (scale 0.3 (text (print-day n) (cast cell Byte) font2))
+         (rectangle cell height2 'outline 'black)
+         (rectangle cell height2 'solid bg2))))}
+    (above
+     (overlay/align
+      "center" "center"
+      (scale 0.5 (text (string-append (print-month month) " "
+                                      (number->string year))
+                       (cast cell Byte) font1))
+      (rectangle (* 7 cell) height1 'outline 'black)
+      (rectangle (* 7 cell) height1 'solid bg1))
+     (foldl draw-day-cell empty-image '(0 1 2 3 4 5 6)))))
 ; eye-ball test
+(display " --- The Title Bar --- \n")
 (title-bar 5 2021 40
              'dodgerblue 'lightyellow 60
              'silver 'blue 30)
@@ -230,7 +217,7 @@
           (make-list day 0)
           (build-list (- 7 day)
                       (λ ([x : Integer]) (+ x 1))))))
-
+(display " --- The First Line --- \n")
 (first-line 6 40 'lightyellow 'black) ;; eye-ball test
 
 
@@ -261,7 +248,7 @@
                (build-list 7 (λ ([x : Integer]) (- (+ x (* 7 n)) (- day 1)))))
         ))}
     (foldl draw-line empty-image loop-list)))
-
+(display " --- The Middle Lines --- \n")
 (middle-lines 6 31 40 'lightyellow 'black) ;; eye-ball test, middle lines
 
 
@@ -282,7 +269,7 @@
             (build-list num2 
                       (λ ([x : Integer]) (+ x num1)))
             (make-list (- 7 num2) 0)))))
-
+(display " --- The Last Line --- \n")
 (last-line 6 31 40 'lightyellow 'black) ;; eye-ball test
 
 
@@ -301,17 +288,21 @@
     [9
      (overlay/xy
       (draw-cell -1 cell (color 255 255 255 0) font-cell empty-image)
-      (* cell 1) (if (< day 2) (+ (* cell 0) height1 height2)
+      (* cell 1) (if (<= day 1) (+ (* cell 0) height1 height2)
                      (+ (* cell 1) height1 height2))
       (draw-cell 0 cell (color 255 192 203 90) font-cell empty-image))]
     [11
      (overlay/xy
       (draw-cell -1 cell (color 255 255 255 0) font-cell empty-image)
-      (* cell 1) (if (< day 2) (+ (* cell 0) height1 height2)
-                     (+ (* cell 1) height1 height2))
+      (* cell 4) (if (<= day 4) (+ (* cell 3) height1 height2)
+                     (+ (* cell 4) height1 height2))
       (draw-cell 0 cell (color 255 192 203 90) font-cell empty-image))]
     [_ empty-image]))
-;; tests are under 6/6
+;; tests of May. 2021, Sept 2021, and Nov. 2021
+(display "\n \n --- Three Holiday Tests --- \n \n")
+; (draw-month fmt0 5 2021)
+; (draw-month fmt0 9 2021)
+; (draw-month fmt0 11 2021)
 
 
 ; 6/6: draw-month
@@ -339,8 +330,9 @@
       [_ (error "wrong Calformat")])))
 
 ;(draw-month fmt0 2 2021) ;; eye-ball tests
-(draw-month fmt0 5 2021)
-(draw-month fmt0 5 2018)
+ (draw-month fmt0 5 2021)
+ (draw-month fmt0 9 2021)
+ (draw-month fmt0 11 2021)
 
 
 ;; Part 2: Run
@@ -372,7 +364,11 @@
                                  (CalWorld-current-year a)))]
     [on-key react-to-key]))
 ;; run 
-;; (run fmt0 2 2021)
-
+(run fmt0 2 2021)
 
 (test)
+
+;; The End of Project 1
+;; Thank you for grading
+;; Have a joyful day!
+;; Faradawn
