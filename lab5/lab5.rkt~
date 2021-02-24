@@ -1,0 +1,66 @@
+#lang typed/racket
+(require "../include/cs151-core.rkt")
+(require "../include/cs151-image.rkt")
+(require "../include/cs151-universe.rkt")
+(require typed/test-engine/racket-tests)
+
+
+(define-type (Optional A)
+  (U 'None (Some A)))
+
+(define-struct (Some A)
+  ([value : A]))
+
+(define-type BST 
+  (U 'Empty Node))
+
+(define-struct Node
+  ([shop : String]
+   [ratings : (Listof Integer)]
+   [lsub : BST]
+   [rsub : BST]))
+
+(define-type Directions   (Listof (U 'left 'right)))
+
+;; example BST
+(: tree0 BST)
+(define tree0 'Empty)
+(: tree1 BST)
+(define tree1 (Node "alpha" '() 'Empty
+                    (Node "beta" '(1 2 3) 'Empty 'Empty)))
+(: tree2 BST)
+(define tree2 (Node "gamma" '(5 5 2 1)
+                    (Node "charlie" '(1 5) 'Empty 'Empty)
+                    (Node "epsilon" '(5 1)
+                          (Node "delta" '(1 5) 'Empty 'Empty)
+                          'Empty)))
+
+
+(: add-rating : String Integer BST -> BST)
+;; 1/6 add-rating 
+;;     Adds a rating for a shop. If the shop is not yet in
+;;     the BST, add it; otherwise, add to the *front* of the
+;;     existing rating list.
+(define (add-rating name n tree)
+  (match tree
+    ['Empty (Node name (list n) 'Empty 'Empty)]
+    [(Node root ratings l r) (cond
+                               [(string<? name root) (add-rating name n l)]
+                               [(string>? name root) (add-rating name n r)]
+                               [else (Node name (cons n ratings) l r)])]))
+
+(check-expect (add-rating "beta" 2 'Empty) (Node "delta" '(2) 'Empty 'Empty))
+(check-expect (add-rating "beta" 2 tree1)
+              (Node "alpha" '() 'Empty
+                    (Node "beta" '(2 1 2 3) 'Empty 'Empty)))
+(check-expect (add-rating "charlie" 2 tree1)
+              (Node "alpha" '() 'Empty
+                    (Node "beta" '(2 1 2 3) 'Empty
+                          (Node "charlie" '(2) 'Empty 'Empty))))
+
+
+
+(test)
+
+           
+
