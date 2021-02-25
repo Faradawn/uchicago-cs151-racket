@@ -33,6 +33,15 @@
                     (Node "epsilon" '(-1 -2)
                           (Node "delta" '(0) 'Empty 'Empty)
                           'Empty)))
+(: tree3 BST)
+(define tree3 (Node "C" '()
+                    (Node "A" '()
+                          'Empty 
+                          (Node "B" '() 'Empty 'Empty))
+                    (Node "E" '()
+                          (Node "D" '() 'Empty 'Empty)
+                          'Empty)))
+                          
 ;; 0/7 helper functions
 ;;     insert-string takes in a string and puts it in a sorted list
 (: insert-string : String (Listof String) -> (Listof String))
@@ -66,10 +75,6 @@
 (check-expect (contain? "charlie" tree2) #t)
 
                          
-     
-
-
-
 ;; 1/7 add-rating 
 ;;     Adds a rating for a shop. If the shop is not yet in
 ;;     the BST, add it; otherwise, add to the *front* of the
@@ -142,7 +147,25 @@
 ;;     alphabetically between start and end (inclusive).
 (: prune-alpha : BST String String -> BST)
 (define (prune-alpha tree a b)
-  'Empty)
+  (match  tree
+    ['Empty 'Empty]
+    [(Node root ratings l r)
+     (cond
+       [(string<? root a) (prune-alpha r a b)]
+       [(string>? root b) (prune-alpha l a b)]
+       [else (Node root ratings (prune-alpha l a b)(prune-alpha r a b))])]))
+       
+(check-expect (prune-alpha tree2 "alpha" "delta")
+              (Node "charlie" '(5 5 2 1)
+                    (Node "alpha" '(1 0) 'Empty 'Empty)
+                    (Node "delta" '(0) 'Empty 'Empty)))
+(check-expect (prune-alpha tree3 "B" "D")
+              (Node "C" '()
+                    (Node "B" '() 'Empty 'Empty)
+                    (Node "D" '() 'Empty 'Empty)))
+(check-expect (prune-alpha tree3 "Y" "Z") 'Empty)
+              
+                    
 
 ;; 5/7 most-recent-rating
 ;;     Returns the most recent rating that the given shop has
