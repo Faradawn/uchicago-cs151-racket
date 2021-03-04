@@ -112,10 +112,10 @@
 
 (: fmt0 CalFormat)
 (define fmt0
-  (CalFormat 40
-             'dodgerblue 'lightyellow 60
-             'silver 'blue 30
-             'lightyellow 'black))
+  (CalFormat 50
+             'black 'white 60
+             'silver 'black 30
+             'white 'black))
 
 ;; print-month
 ;; takes in an Integer and returns the month in String
@@ -290,7 +290,10 @@
       [(CalFormat cell bg1 font1 height1 bg2 font2 height2 bg-cell font-cell)
        ;-- define place-target
        (local
-         {(define day (day-of-week (Date month 1 year)))
+         {(define hr (Time-hour now-time))
+          (define min (Time-minute now-time))
+          (define sec (Time-second now-time))
+          (define day (day-of-week (Date month 1 year)))
           (define total-days (days-in-month month year))
           (define place-target (overlay/xy
              (square cell 'solid (color 0 0 0 0))
@@ -311,23 +314,26 @@
           (middle-lines day total-days cell bg-cell font-cell)
           (last-line day total-days cell bg-cell font-cell)
           (circle (/ cell 4) 'solid 'white)
-          (scale 0.3 (text now-date-str (cast cell Byte)'black)))
-          ;-- right calendar
+          (scale 0.4 (text/font now-date-str (cast cell Byte)
+                      "black" "Gill Sans" 'decorative 'normal 'light #f)))
+          ;-- right sidebar
          (scale 0.3 
                 (above/align
                  "right"
                  (circle (/ cell ) 'solid 'white)
+                 (text/font (string-append "   " (print-date cal-date) )
+                            (cast cell Byte) "black" "Gill Sans"
+                            'modern 'normal 'bold #f)
                  (text (string-append
-                        "   "
-                        (print-date cal-date))
-                       (cast cell Byte) 'black) 
-                 (text (string-append
-                        "   Time: "
-                        (number->string (Time-hour now-time)) ":"
-                        (number->string (Time-minute now-time)) ":"
-                        (number->string (Time-second now-time)))
-                       (cast cell Byte)'black)
-                 (text "   Press '?' for Help"(cast cell Byte)'black))))
+                        "   Time:  "
+                        (number->string
+                         (if (> hr 12) (- hr 12) hr)) ":"
+                        (number->string min) ":"
+                        (number->string sec) " "
+                        (if (> hr 12) "pm" "am \n")) (cast cell Byte)'black)
+                 (text/font "   Press '?' for Help"
+                            (cast cell Byte)
+                            "black" "Gill Sans" 'script 'normal 'light #f))))
           ;-- bg rectangle
         (rectangle (* 10 cell) (+ height1 height2 (* cell 7)) 'solid 'white)))]
       [_ (error "wrong Calformat")]))
@@ -337,13 +343,22 @@
 (define (draw-menu format)
   (match format
     [(CalFormat cell bg1 font1 height1 bg2 font2 height2 bg-cell font-cell)
-     (overlay/align
+     (overlay/align/offset
       "left" "top"
       (scale 0.3
-             (above
-              (text "+ : move right one day" (cast cell Byte) 'black)
-              (text "- : move left one day" (cast cell Byte)'black)))
-      (rectangle (* 10 cell) (+ height1 height2 (* cell 7)) 'solid 'pink))]))
+             (above/align "left"
+              (text/font "Help\n" (cast cell Byte)
+                         "black" "Gill Sans" 'script 'normal 'bold #t)
+              (text "+ : Day Forward \n" (cast cell Byte) 'black)
+              (text "- : Day Backward \n" (cast cell Byte)'black)
+              (text "[right] : Month Forward \n" (cast cell Byte)'black)
+              (text "[left] : Month Backward \n" (cast cell Byte)'black)
+              (text "[up] : Year Forward \n" (cast cell Byte)'black)
+              (text "[down] : Year Backward \n" (cast cell Byte)'black)
+              (text "T : Reset to Current Date \n" (cast cell Byte)'black)
+              (text "? : Help" (cast cell Byte)'black)))
+      -20 -15
+      (rectangle (* 10 cell) (+ height1 height2 (* cell 7)) 'solid 'white))]))
 
 ;; draw-final is the final function that used in run 
 (: draw-final : CalWorld2 -> Image)
@@ -546,6 +561,7 @@
                        (Date month 1 year) ; now-date
                        (print-date (Date month 1 year)) ; now-date-str
                        (read-time-now)) : CalWorld2
+    [name "CS151 Project2 Winter 2021"]
     [to-draw draw-final]
     [on-key react-to-key]
     [on-tick tick 1]))
