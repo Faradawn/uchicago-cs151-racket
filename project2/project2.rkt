@@ -112,7 +112,7 @@
 
 (: fmt0 CalFormat)
 (define fmt0
-  (CalFormat 50
+  (CalFormat 30
              'black 'white 60
              'silver 'black 30
              'white 'black))
@@ -303,8 +303,9 @@
                 (+ height1 height2))
              ;-- target circle
              (overlay/align "center" "center"
-                            (circle (/ cell 4) 'solid (color 255 192 203 90))
-                            (square cell 'solid (color 255 192 100 50)))))}
+                            (circle (/ cell 7) 'solid (color 0 0 0 20))
+                            (circle (/ cell 4) 'solid (color 0 0 0 15))
+                            (square cell 'solid (color 0 0 0 10)))))}
          ;-- start overlay
          (overlay/align "left" "top" place-target (beside/align "top"
          ;-- left calendar
@@ -317,7 +318,7 @@
           (scale 0.4 (text/font now-date-str (cast cell Byte)
                       "black" "Gill Sans" 'decorative 'normal 'light #f)))
           ;-- right sidebar
-         (scale 0.3 
+         (scale 0.27 
                 (above/align
                  "right"
                  (circle (/ cell ) 'solid 'white)
