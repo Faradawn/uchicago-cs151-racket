@@ -42,7 +42,6 @@
     [_ 30]
     ))
 
-
 (: doomsday-in-month (-> Integer Integer Integer))
 (define (doomsday-in-month m y)
   (match m
@@ -148,7 +147,19 @@
     [5 "Fri"]
     [6 "Sat"]
     [_ (error "wrong week day")]))
-         
+
+;; print-date takes in a date and returns a string of the date
+(: print-date : Date -> String)
+(define (print-date date)
+  (match date
+    [(Date m d y)
+     (string-append (print-day (day-of-week date)) ", "
+                    (print-month m) " "
+                    (number->string d) ", "
+                    (number->string y))]))
+(check-expect (print-date (Date 3 1 2021)) "Mon, March 1, 2021")
+(check-expect (print-date (Date 2 28 2021)) "Sun, February 28, 2021")
+(check-expect (print-date (Date 3 31 2021)) "Wed, March 31, 2021")
 
 ;; Part 1: draw-month
 ;;         this part includes 6 functions
@@ -308,10 +319,7 @@
                  (circle (/ cell ) 'solid 'white)
                  (text (string-append
                         "   "
-                        (print-day (day-of-week now-date)) ", "
-                        (print-month month) " "
-                        (number->string (Date-d cal-date)) ", "
-                        (number->string year))
+                        (print-date cal-date))
                        (cast cell Byte) 'black) 
                  (text (string-append
                         "   Time: "
@@ -359,19 +367,6 @@
                               "Wed, March 3, 2021" (Time 07 29 59)))
 (draw-final CalWorld-3)
 
-;; print-date takes in a date and returns a string of the date
-(: print-date : Date -> String)
-(define (print-date date)
-  (match date
-    [(Date m d y)
-     (string-append (print-day (day-of-week date)) ", "
-                    (print-month m) " "
-                    (number->string d) ", "
-                    (number->string y))]))
-(check-expect (print-date (Date 3 1 2021)) "Mon, March 1, 2021")
-(check-expect (print-date (Date 2 28 2021)) "Sun, February 28, 2021")
-(check-expect (print-date (Date 3 31 2021)) "Wed, March 31, 2021")
-
 ;; yesterday takes in a date and returns the preivous day
 ;            keeping in mind the special cases of first day of month / year
 (: yesterday : Date -> Date)
@@ -398,10 +393,7 @@
 (check-expect (tomorrow (Date 3 31 2021)) (Date 4 1 2021))
 (check-expect (tomorrow (Date 12 31 2021)) (Date 1 1 2022))
 (check-expect (tomorrow (Date 3 10 2021)) (Date 3 11 2021))
-
   
-
-
 ;; react-to-key handles the 8 types inputs of keyboard
 (: react-to-key : CalWorld2 String -> CalWorld2)
 (define (react-to-key world key)
@@ -411,7 +403,23 @@
        [(Date m d y)
         ;-- define plus minus functions
         (local
-          {(define a 10)}
+          {(define next-month
+             (cond [(= m 12) (Date 1 d (+ y 1))] ; test 12 2021
+                   [(> d (days-in-month (+ m 1) y)) ; test 2 2021 -> 3 2021
+                    (Date (+ m 1) (days-in-month (+ m 1) y) y)]
+                   [else (Date (+ m 1) d y)]))
+           (define prev-month
+             (cond [(= m 1) (Date 12 d (- y 1))]
+                   [(> d (days-in-month (- m 1) y)) ; test 2 2021 -> 3 2021
+                    (Date (- m 1) (days-in-month (- m 1) y) y)]
+                   [else (Date (- m 1) d y)]))
+           (define next-year
+             (cond [(and (= m 2) (= d 29)) (Date 3 1 (+ y 1))]
+                   [else (Date m d (+ y 1))]))
+           (define prev-year
+             (cond [(and (= m 2) (= d 29)) (Date 3 1 (- y 1))]
+                   [else (Date m d (- y 1))]))}
+           
         ;-- match key
         (match key
           ["+" (CalWorld2 mode format cal-date
@@ -420,20 +428,129 @@
           ["-" (CalWorld2 mode format cal-date
                           (yesterday now-date)
                           (print-date (yesterday now-date)) now-time)]
-          ["right" world]
-          [_ world]))])])); zach
-                           
+          ["right" (CalWorld2 mode format cal-date
+                              next-month (print-date next-month) now-time)]
+          ["left" (CalWorld2 mode format cal-date
+                              prev-month (print-date prev-month) now-time)]
+          ["up" (CalWorld2 mode format cal-date
+                              next-year (print-date next-year) now-time)]
+          ["down" (CalWorld2 mode format cal-date
+                              prev-year (print-date prev-year) now-time)]
+          ["T" (CalWorld2 mode format cal-date
+                              cal-date (print-date cal-date) now-time)]
+          ["?" (CalWorld2 'help format cal-date
+                              now-date (print-date now-date) now-time)]
+          ["escape" (CalWorld2 'calendar format cal-date
+                              now-date (print-date now-date) now-time)]
+          [_ world]))])]))
+;; tests of right and left; (tests of - + are under yesterday and tomorrow)
+(define world1 (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 12 31 2021)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key world1 "right")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 1 31 2022)
+                         "Mon, January 31, 2022" (Time 7 29 59)))
+(define world2 (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 1 31 2021)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key world2 "right")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 28 2021)
+                         "Sun, February 28, 2021" (Time 7 29 59)))
+(define world3 (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 1 5 2021)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key world3 "right")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 5 2021)
+                         "Fri, February 5, 2021" (Time 7 29 59)))
+(define world4 (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 1 31 2021)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key world4 "left")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 12 31 2020)
+                         "Thu, December 31, 2020" (Time 7 29 59)))
+(define world5(CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 3 31 2021)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key world5 "left")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 28 2021)
+                         "Sun, February 28, 2021" (Time 7 29 59)))
+(define world6 (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 3 5 2021)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key world6 "left")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 5 2021)
+                         "Fri, February 5, 2021" (Time 7 29 59)))
+;; tests for up and down
+(define worlda (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 29 2020)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key worlda "up")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 3 1 2021)
+                         "Mon, March 1, 2021" (Time 7 29 59)))
+(define worldb (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 28 2020)
+                              " " (Time 07 29 59)))
+(check-expect (react-to-key worldb "up")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 28 2021)
+                         "Sun, February 28, 2021" (Time 7 29 59)))
+(check-expect (react-to-key worlda "down")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 3 1 2019)
+                         "Fri, March 1, 2019" (Time 7 29 59)))
+(check-expect (react-to-key worldb "down")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 2 28 2019)
+                         "Thu, February 28, 2019" (Time 7 29 59)))
+;; test for T and ?
+(check-expect (react-to-key world1 "T")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 3 1 2021)
+                         "Mon, March 1, 2021" (Time 7 29 59)))
+(check-expect (react-to-key world1 "?")
+              (CalWorld2 'help fmt0 (Date 3 1 2021) (Date 12 31 2021)
+                         "Fri, December 31, 2021" (Time 7 29 59)))
+(check-expect (react-to-key world1 "esccape")
+              (CalWorld2 'calendar fmt0 (Date 3 1 2021) (Date 12 31 2021)
+                         " " (Time 7 29 59)))
+
+(: read-date-now : -> Date)
+(define read-date-now (λ () (Date (date-month (current-date))
+                            (date-day (current-date))
+                            (date-year (current-date)))))
+
+(: read-time-now : -> Time)
+(define read-time-now (λ () (Time (date-hour (current-date))
+                            (date-minute (current-date))
+                            (date-second (current-date)))))
+
+;; tick takes in a CalWorld and returns an updated one every second
+;; tick updates the time continously
+;  and changes the current date if enters new day
+(: tick : CalWorld2 -> CalWorld2)
+(define (tick world)
+  (match world
+    [(CalWorld2 mode format cal-date now-date now-str now-time)
+     (match* ((read-date-now) (read-time-now))
+       [((Date month day year) (Time hr min sec))
+        (local
+          {(define new-now-date
+             (if (and (= hr 23) (= min 59) (= sec 59))
+                 (match now-date
+                   [(Date m d y)
+                    (if (= d (days-in-month m y))
+                        (if (= m 12) (Date 1 1 (+ y 1)) (Date (+ m 1) 1 y))
+                        (Date m (+ d 1) y))])
+                 now-date))}
+          (CalWorld2 mode format
+                     (Date month day year)
+                     new-now-date
+                     (print-date new-now-date)
+                     (Time hr min sec)))])]))
+
+
+;; run, takes in a CalFormat, month, and year to initialize
+;; a CalWorld2. Tick will set Time to the current time. 
 (: run : CalFormat Integer Integer -> CalWorld2)
 (define (run format month year)  
   (big-bang (CalWorld2 'calendar format
-                       (Date month 1 year) ; cal-date
+                       (read-date-now) ; cal-date
                        (Date month 1 year) ; now-date
                        (print-date (Date month 1 year)) ; now-date-str
-                       (Time 0 0 0)) : CalWorld2
+                       (read-time-now)) : CalWorld2
     [to-draw draw-final]
-    [on-key react-to-key]))
+    [on-key react-to-key]
+    [on-tick tick 1]))
 
 (test)
-(run fmt0 1 2021)                 
+(run fmt0 12 2021)                 
 
 
