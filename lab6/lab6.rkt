@@ -96,13 +96,25 @@
 (check-expect (passenger<? p5 p7) #t) 
 (check-expect (passenger<? p1 p9) #f)
 
-(: insert : Passenger (Listof Passenger) -> (Listof Passenger))
-(define (insert n ls) ; ascending list
-  (match ls
-    ['() (list n)]
-    [(cons head tail) (if (passenger<? n head)
-                          (cons n ls)
-                          (cons head (insert n tail)))]))
+;------- Algo 1 - Insertion Sort - Expoential -------
+
+;(: insert : Passenger (Listof Passenger) -> (Listof Passenger))
+;(define (insert n ls) ; ascending list
+;  (match ls
+;    ['() (list n)]
+;    [(cons head tail) (if (passenger<? n head)
+;                          (cons n ls)
+;                          (cons head (insert n tail)))]))
+;(: sort-passengers : (Listof Passenger) -> (Listof Passenger))
+;(define (sort-passengers ls)
+;  (match ls
+;    ['() '()]
+;    [(cons head tail) (insert head (sort-passengers tail))]))
+     
+
+
+;------ Algo 2: Quick Sort - Linear ------
+
 
 
 (: sort-passengers : (Listof Passenger) -> (Listof Passenger))
@@ -117,8 +129,14 @@
       (sort-passengers (filter (λ ([ x : Passenger])
                                  (not (passenger<? x pivot))) tail)))]))
 
-(check-expect (sort-passengers (list p12 p11 p13 p14))
-              (list p11 p12 p13 p14))
+;(check-expect (sort-passengers (list p12 p11 p13 p14))
+;              (list p11 p12 p13 p14))
+
+
+;------ Algo 3: Merge Sort - Exponential ------
+
+
+
       
 ;; Part 2 - Analyzing Three Sorting Speed
 ;;
@@ -144,19 +162,19 @@
 
 ;; generate passenger lists
 
-(define pl1 (random-passenger-list 10000))
-(define pl2 (random-passenger-list 20000))
-(define pl3 (random-passenger-list 40000))
-(define pl4 (random-passenger-list 80000))
-(define pl5 (random-passenger-list 160000))
-(define pl6 (random-passenger-list 320000))
+(define pl1 (random-passenger-list 1000))
+(define pl2 (random-passenger-list 2000))
+(define pl3 (random-passenger-list 4000))
+(define pl4 (random-passenger-list 8000))
+(define pl5 (random-passenger-list 16000))
+(define pl6 (random-passenger-list 25000))
 
 (begin (display "10k: ") (time (eat (sort-passengers pl1))))
 (begin (display "20k: ") (time (eat (sort-passengers pl2))))
 (begin (display "40k: ") (time (eat (sort-passengers pl3))))
 (begin (display "80k: ") (time (eat (sort-passengers pl4))))
-(begin (display "16k: ") (time (eat (sort-passengers pl5))))
-(begin (display "32k: ") (time (eat (sort-passengers pl6))))
+(begin (display "160k: ") (time (eat (sort-passengers pl5))))
+(begin (display "250k: ") (time (eat (sort-passengers pl6))))
 
 
 (test)
