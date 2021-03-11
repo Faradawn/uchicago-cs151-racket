@@ -461,6 +461,147 @@
 (check-expect (string->time "12:30pmm") 'None)
 (check-expect (string->time "1230pm") 'None)
 
+;; (time<?) takes in two Time and compare which one is eariler
+(: time<? : Time Time -> Boolean)
+(define (time<? t1 t2)
+  (match* (t1 t2)
+    [((Time h1 m1 s1)(Time h2 m2 s2))
+     (if (< h1 h2) #t
+         (if (= h1 h2) (if (< m1 m2) #t
+                           (if (= m1 m2) (< s1 s2) #f)) #f))]))
+(check-expect (time<? (Time 10 23 00) (Time 10 23 01)) #t)
+(check-expect (time<? (Time 10 23 00) (Time 10 24 00)) #t)
+(check-expect (time<? (Time 12 23 00) (Time 13 24 01)) #t)
+(check-expect (time<? (Time 12 23 00) (Time 12 23 00)) #f)
+(check-expect (time<? (Time 1 23 00) (Time 20 24 00)) #t)
+(check-expect (time<? (Time 12 23 00) (Time 20 24 01)) #t)
+;; (time=?) takes in two Time and compare if they are equal
+(: time=? : Time Time -> Boolean)
+(define (time=? t1 t2)
+  (match* (t1 t2)
+    [((Time h1 m1 s1)(Time h2 m2 s2))
+     (and (= h1 h2) (= m1 m2) (= s1 s2))]))
+(check-expect (time=? (Time 10 23 00) (Time 10 23 00)) #t)
+(check-expect (time=? (Time 10 23 00) (Time 10 24 00)) #f)
+
+;; (event<?) determines if the first event is "less than"
+;;          the second according to event order
+(: event<? : Event Event -> Boolean)
+(define (event<? event1 event2)
+  (match* (event1 event2)
+    [((Event date1 time1 des1) (Event date2 time2 des2))
+     (match* (time1 time2)
+       [('all-day 'all-day) (string<? des1 des2)]
+       [('all-day _) #t]
+       [(_ 'all-day) #f]
+       [((Time _ _ _)(Time _ _ _))
+        (if (time<? time1 time2) #t
+            (if (time=? time1 time2) (string<? des1 des2) #f))]
+       [((Time _ _ _)(Span start end)) (if (not (time<? time1 start)) #f #t)]
+       [((Span start end) (Time _ _ _)) (if (time<? start time2) #t #f)]
+       [((Span start1 end1)(Span start2 end2))
+        (if (time<? start1 start2) #t
+            (if (time=? start1 start2)
+                (if (time<? end1 end2) #t
+                    (if (time=? end1 end2)
+                        (string<? des1 des2) #f)) #f))])]))
+
+(define date1 (Date 5 12 2019))
+(define date2 (Date 2 11 2021))
+(define date3 (Date 2 20 2021))
+(define date4 (Date 4 9 2021))
+(define time1 (Time 0 50 00))
+(define time2 (Time 11 22 01))
+(define time3 (Time 22 09 00))
+(define time4 (Time 23 00 00))
+(check-expect
+ (event<? (Event date1 'all-day "a") (Event date1 'all-day "b")) #t)
+(check-expect
+ (event<? (Event date1 'all-day "a") (Event date1 time1 "b")) #t)
+(check-expect
+ (event<? (Event date1 time1 "c") (Event date1 time2 "a")) #t)
+(check-expect
+ (event<? (Event date1 time1 "a") (Event date1 time1 "b")) #t)
+(check-expect
+ (event<? (Event date1 time1 "a") (Event date1 (Span time1 time2) "a")) #f)
+(check-expect
+ (event<? (Event date1 time2 "a") (Event date1 (Span time1 time2) "a")) #f)
+(check-expect
+ (event<? (Event date1 (Span time1 time2) "b")
+          (Event date1 (Span time1 time3) "a")) #t)
+(check-expect
+ (event<? (Event date1 (Span time2 time3) "b")
+          (Event date1 (Span time1 time4) "a")) #f)
+       
+;; (date<?) compares two date and determine which is smaller
+(: date<? : Date Date -> Boolean)
+(define (date<? date1 date2)
+  (match* (date1 date2)
+    [((Date m1 d1 y1)(Date m2 d2 y2))
+     (if (< y1 y2) #t
+         (if (= y1 y2) ;;
+             (if (< m1 m2) #t
+                 (if (= m1 m2) (< d1 d2)  #f)) #f))]))
+(check-expect (date<? date1 date1) #f)
+(check-expect (date<? date1 date2) #t)
+(check-expect (date<? date2 date3) #t)
+(check-expect (date<? date4 date1) #f)
+;; (date=? compares if two dates are equal
+(: date=? : Date Date -> Boolean)
+(define (date=? date1 date2)
+  (match* (date1 date2)
+    [((Date m1 d1 y1)(Date m2 d2 y2))
+     (and (= m1 m2) (= d1 d2) (= y1 y2))]))
+(check-expect (date=? date1 date1) #t)
+(check-expect (date=? date1 date2) #f)
+
+
+; define events
+(define event1 (Event date1 'all-day "a"))
+(define event2 (Event date1 'all-day "b"))
+(define event3 (Event date1 time1 "c"))
+(define event4 (Event date2 time1 "a"))
+(define event5 (Event date2 (Span time2 time3) "d"))
+(define event6 (Event date2 (Span time3 time4) "a"))
+
+;; (insert) adds an event to an list in ascending order
+(: insert : Event (Listof Event) -> (Listof Event))
+(define (insert s ls)
+  (match ls
+    ['() (list s)]
+    [(cons head tail) (if (event<? s head) (cons s ls)
+                          (cons head (insert s tail)))]))
+(check-expect (insert event2 (list event1 event3)) (list event1 event2 event3))
+(check-expect (insert event3 (list event1 event2)) (list event1 event2 event3))
+(check-expect (insert event4 '()) (list event4))
+
+;; insert an event into an event tree, creating the node if needed, ascending
+(: insert-event-tree : Event EventTree -> EventTree)
+(define (insert-event-tree event tree)
+  (match event
+    [(Event date time des)
+     (match tree
+       ['Empty (EventNode date (list event) 'Empty 'Empty)]
+       [(EventNode date1 ls lsub rsub)
+        (cond
+          [(date<? date date1) (insert-event-tree event lsub)]
+          [(date=? date date1) (EventNode date (insert event ls) lsub rsub)]
+          [else (insert-event-tree event rsub)])])]))
+(define tree1 (EventNode date2 (list event4 event5)
+                         (EventNode date1 (list event1 event2) 'Empty 'Empty)
+                         'Empty))
+(check-expect (insert-event-tree event6 tree1)
+              (EventNode date2 (list event4 event5 event6)
+                         (EventNode date1 (list event1 event2) 'Empty 'Empty)
+                         'Empty))
+          
+                                            
+        
+       
+         
+       
+
+
 
         
                        
@@ -565,11 +706,6 @@
                      (print-date new-now-date)
                      (Time hr min sec)
                      notepad opt-start opt-end events))])]))
-
-
-;; define event
-(: event1 Event)
-(define event1 (Event (Date 3 11 2021) 'all-day "all-day event1"))
 
 ;; run, takes in a CalFormat, month, and year to initialize
 ;; a CalWorld. Tick will set Time to the current time. 
