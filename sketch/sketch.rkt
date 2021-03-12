@@ -4,43 +4,27 @@
 (require "../include/cs151-universe.rkt")
 (require typed/test-engine/racket-tests)
 
-(: take : All(A) (Listof A) Integer -> (Listof A))
-(define (take ls pos)
-  (match ls
-    ['() '()]
-    [(cons head tail) (if (> pos 1)
-                          (cons head (take tail (- pos 1)))
-                          (list head))]))
-(check-expect (take '(1 2 3) 2) '(1 2))
-;; (drop) takes in a list and keep the sub-list after index
-(: drop : All(A) (Listof A) Integer -> (Listof A))
-(define (drop ls pos)
-  (match ls
-    ['() '()]
-    [(cons head tail) (if (> pos 1)
-                          (drop tail (- pos 1))
-                          tail)]))
-(check-expect (drop '(1 2 3) 1) '(2 3))
+(define-struct Time
+  ([hour : Integer] ;; from 0 to 23
+   [minute : Integer]
+   [second : Integer]))
 
-(: get : All(A) (Listof A) Integer -> A)
-(define (get ls pos)
-  (match ls
-    ['() (error "out of bound")]
-    [(cons head tail) (if (<= pos 0)
-                          head
-                          (list-ref tail (- pos 1)))]))
-(check-expect (get '(1 2 3) 1) 2)
+(: time<? : Time Time -> Boolean)
+(define (time<? t1 t2)
+  (match* (t1 t2)
+    [((Time h1 m1 s1)(Time h2 m2 s2))
+     (if (< h1 h2) #t
+         (if (= h1 h2) (if (< m1 m2) #t
+                           (if (= m1 m2)
+                               (if (< s1 s2) #t #f)
+                               #f))
+                           #f))]))
 
-(define str "2:23pm")
-(define ls0 (string->list str))
-(define ls1 (if (or (char=? (get ls0 1) #\:) (char=? (get ls0 2) #\:))
-              (filter char-numeric? (take ls0 2)) '()))
-(define ls2 (filter char-numeric? (take (drop ls0 (+ (length ls1) 1)) 2)))
-
-(: list->int : (Listof Char) -> Integer)
-(define (list->int ls)
-  (cast (string->number (list->string ls)) Integer))
-(check-expect (list->int '(#\1 #\2)) 12) 
-
+(check-expect (time<? (Time 10 23 00) (Time 10 23 01)) #t)
+(check-expect (time<? (Time 10 23 00) (Time 10 24 00)) #t)
+(check-expect (time<? (Time 12 23 00) (Time 13 24 01)) #t)
+(check-expect (time<? (Time 12 23 00) (Time 12 23 00)) #f)
+(check-expect (time<? (Time 1 23 00) (Time 20 24 00)) #t)
+(check-expect (time<? (Time 12 23 00) (Time 20 24 01)) #t)
 
 (test)

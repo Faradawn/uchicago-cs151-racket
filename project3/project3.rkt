@@ -137,7 +137,6 @@
    [opt-end : (Optional Time)]
    [events : EventTree]))
 
-
 (define-struct CalWorld2
   ([mode : (U 'calendar 'help)]
    [format : CalFormat]
@@ -148,7 +147,12 @@
 
 (: fmt0 CalFormat)
 (define fmt0
-  (CalFormat 40
+  (CalFormat 50
+             'black 'white 60
+             'silver 'black 20
+             'white 'black))
+(define fmt1
+  (CalFormat 30
              'black 'white 60
              'silver 'black 20
              'white 'black))
@@ -196,6 +200,17 @@
 (check-expect (print-date (Date 3 1 2021)) "Mon, March 1, 2021")
 (check-expect (print-date (Date 2 28 2021)) "Sun, February 28, 2021")
 (check-expect (print-date (Date 3 31 2021)) "Wed, March 31, 2021")
+
+;; print-time takes in a time and returns a string of the time
+(: print-time : Time -> String)
+(define (print-time time)
+  (match time
+    [(Time hr min sec)
+     (string-append
+      (number->string
+       (if (> hr 12) (- hr 12) hr)) ":"
+           (number->string min) (if (> hr 12) "pm" "am"))]))
+(check-expect (print-time (Time 13 50 00)) "1:50pm")
 
 ;; 1/6: title-bar, stacks the 'month title' on top of the 'day titles'
 (: title-bar : Integer Integer Integer Image-Color Image-Color Integer
@@ -280,100 +295,8 @@
             (build-list num2 
                       (λ ([x : Integer]) (+ x num1)))
             (make-list (- 7 num2) 0)))))
-;(display " --- The Last Line --- \n")
-;(last-line 6 31 40 'lightyellow 'black) ;; eye-ball test
 
-; draw-month draws the base calendar
-(: draw-month : CalFormat Integer Integer Date Date String Time -> Image) 
-(define (draw-month format month year cal-date now-date now-date-str now-time)
-  (match format
-      [(CalFormat cell bg1 font1 height1 bg2 font2 height2 bg-cell font-cell)
-       ;-- define place-target
-       (local
-         {(define hr (Time-hour now-time))
-          (define min (Time-minute now-time))
-          (define sec (Time-second now-time))
-          (define day (day-of-week (Date month 1 year)))
-          (define total-days (days-in-month month year))
-          (define place-target (overlay/xy
-             (square cell 'solid (color 0 0 0 0))
-             ;-- xy math
-             (* cell (+ (remainder (+ (Date-d now-date) day -1) 7)))
-             (+ (* cell (exact-floor (/ (+ (Date-d now-date) day -1) 7)))
-                (+ height1 height2))
-             ;-- target circle
-             (overlay/align "center" "center"
-                            (circle (/ cell 7) 'solid (color 0 0 0 20))
-                            (circle (/ cell 4) 'solid (color 0 0 0 15))
-                            (square cell 'solid (color 0 0 0 10)))))}
-         ;-- start overlay
-         (overlay/align "left" "top" place-target (beside/align "top"
-         ;-- left calendar
-         (above
-          (title-bar month year cell bg1 font1 height1 bg2 font2 height2)
-          (first-line day cell bg-cell font-cell)
-          (middle-lines day total-days cell bg-cell font-cell)
-          (last-line day total-days cell bg-cell font-cell)
-          (circle (/ cell 4) 'solid 'white)
-          (scale 0.4 (text/font now-date-str (cast cell Byte)
-                      "black" "Gill Sans" 'decorative 'normal 'light #f)))
-          ;-- right sidebar
-         (scale 0.27 
-                (above/align
-                 "right"
-                 (circle (/ cell ) 'solid 'white)
-                 (text/font (string-append "   " (print-date cal-date) )
-                            (cast cell Byte) "black" "Gill Sans"
-                            'modern 'normal 'bold #f)
-                 (text (string-append
-                        "   Time:  "
-                        (number->string
-                         (if (> hr 12) (- hr 12) hr)) ":"
-                        (number->string min) ":"
-                        (number->string sec) " "
-                        (if (> hr 12) "pm" "am \n")) (cast cell Byte)'black)
-                 (text/font "   Press '?' for Help"
-                            (cast cell Byte)
-                            "black" "Gill Sans" 'script 'normal 'light #f))))
-          ;-- bg rectangle
-        (rectangle (* 10 cell) (+ height1 height2 (* cell 7)) 'solid 'white)))]
-      [_ (error "wrong Calformat")]))
 
-; draw-menu draws the help-menu
-(: draw-menu : CalFormat -> Image)
-(define (draw-menu format)
-  (match format
-    [(CalFormat cell bg1 font1 height1 bg2 font2 height2 bg-cell font-cell)
-     (overlay/align/offset
-      "left" "top"
-      (scale 0.3
-             (above/align "left"
-              (text/font "Help\n" (cast cell Byte)
-                         "black" "Gill Sans" 'script 'normal 'bold #t)
-              (text "+ : Day Forward \n" (cast cell Byte) 'black)
-              (text "- : Day Backward \n" (cast cell Byte)'black)
-              (text "[right] : Month Forward \n" (cast cell Byte)'black)
-              (text "[left] : Month Backward \n" (cast cell Byte)'black)
-              (text "[up] : Year Forward \n" (cast cell Byte)'black)
-              (text "[down] : Year Backward \n" (cast cell Byte)'black)
-              (text "T : Reset to Current Date \n" (cast cell Byte)'black)
-              (text "? : Help" (cast cell Byte)'black)))
-      -20 -15
-      (rectangle (* 10 cell) (+ height1 height2 (* cell 7)) 'solid 'white))]))
-
-;; draw-final is the final function that used in run 
-(: draw-final : CalWorld3 -> Image)
-(define (draw-final world)
-  (match world
-    [(CalWorld3 mode entry-mode format cal-date now-date now-str now-time
-                notepad opt-start opt-end events)
-     (match mode
-       ['help (draw-menu format)]
-       ['calendar
-        (match now-date
-          [(Date m d y)
-           (draw-month format m y cal-date now-date now-str now-time)])]
-       ['entry empty-image])]))
 
 ;; yesterday takes in a date and returns the preivous day
 ;            keeping in mind the special cases of first day of month / year
@@ -441,6 +364,7 @@
 ;; (string->time) takes the string from notepad and returns a Optional Time
 (: string->time : String -> (Optional Time))
 (define (string->time str)
+  (if (< (string-length str) 3) 'None
   (local
     {(define ls0 (string->list str))
      (define ls1 (if (or (char=? (get ls0 1) #\:) (char=? (get ls0 2) #\:))
@@ -454,9 +378,10 @@
           ["am" (Some (Time (list->int ls1) (list->int ls2) 0))]
           ["pm" (Some (Time (+ (list->int ls1) 12) (list->int ls2) 0))]
           [_ 'None])
-          'None)))
+          'None))))
 (check-expect (string->time "10:00am") (Some (Time 10 0 0)))
 (check-expect (string->time "4:30pm") (Some (Time 16 30 0)))
+(check-expect (string->time "1:30am") (Some (Time 1 30 0)))
 (check-expect (string->time ":30pm") 'None)
 (check-expect (string->time "12:30pmm") 'None)
 (check-expect (string->time "1230pm") 'None)
@@ -557,12 +482,12 @@
 
 
 ; define events
-(define event1 (Event date1 'all-day "a"))
-(define event2 (Event date1 'all-day "b"))
-(define event3 (Event date1 time1 "c"))
-(define event4 (Event date2 time1 "a"))
-(define event5 (Event date2 (Span time2 time3) "d"))
-(define event6 (Event date2 (Span time3 time4) "a"))
+(define event1 (Event date1 'all-day "Asa's Birthday Party"))
+(define event2 (Event date1 'all-day "Belle's Birthday Party"))
+(define event3 (Event date1 time1 "Cindy's Birthday Party"))
+(define event4 (Event date2 time1 "Daisy's Birthday Party"))
+(define event5 (Event date2 (Span time2 time3) "Evelyn's Birthday Party"))
+(define event6 (Event date2 (Span time3 time4) "Freya's Birthday Party"))
 
 ;; (insert) adds an event to an list in ascending order
 (: insert : Event (Listof Event) -> (Listof Event))
@@ -575,7 +500,7 @@
 (check-expect (insert event3 (list event1 event2)) (list event1 event2 event3))
 (check-expect (insert event4 '()) (list event4))
 
-;; insert an event into an event tree, creating the node if needed, ascending
+;; (insert-event-tree) inserts event ascendingly into list, or creates node
 (: insert-event-tree : Event EventTree -> EventTree)
 (define (insert-event-tree event tree)
   (match event
@@ -584,22 +509,284 @@
        ['Empty (EventNode date (list event) 'Empty 'Empty)]
        [(EventNode date1 ls lsub rsub)
         (cond
-          [(date<? date date1) (insert-event-tree event lsub)]
+          [(date<? date date1) (EventNode date1 ls
+                                          (insert-event-tree event lsub) rsub)]
           [(date=? date date1) (EventNode date (insert event ls) lsub rsub)]
-          [else (insert-event-tree event rsub)])])]))
+          [else (EventNode date1 ls lsub (insert-event-tree event rsub))])])]))
+
 (define tree1 (EventNode date2 (list event4 event5)
                          (EventNode date1 (list event1 event2) 'Empty 'Empty)
                          'Empty))
+
 (check-expect (insert-event-tree event6 tree1)
               (EventNode date2 (list event4 event5 event6)
                          (EventNode date1 (list event1 event2) 'Empty 'Empty)
                          'Empty))
-          
-                                            
-        
-       
-         
-       
+(check-expect (insert-event-tree event3 tree1)
+              (EventNode date2 (list event4 event5)
+                         (EventNode date1 (list event1 event2 event3)
+                                    'Empty 'Empty) 'Empty))
+(check-expect (insert-event-tree event1 'Empty)
+              (EventNode date1 (list event1) 'Empty 'Empty))
+
+
+;; (insert-event-world) insert an event into the event tree in a cal world
+(: insert-event-world : Event CalWorld3 -> CalWorld3)
+(define (insert-event-world event world)
+  (match world
+    [(CalWorld3 mode entry-mode format cal-date now-date now-str now-time
+                notepad opt-start opt-end tree)
+     (CalWorld3 mode entry-mode format cal-date now-date now-str now-time
+                notepad opt-start opt-end (insert-event-tree event tree))]))
+
+(define world0 (CalWorld3 'calendar 'start fmt0 date1 date1 "str" time1
+                         "10:00am" 'None 'None tree1))
+(define world1 (CalWorld3 'entry 'start fmt1 date1 date1 "str" time1
+                         "10:00am" 'None 'None tree1))
+(check-expect (insert-event-world event6 world0)
+              (CalWorld3 'calendar 'start fmt0 date1 date1 "str" time1
+                         "10:00am" 'None 'None
+                         (EventNode date2 (list event4 event5 event6)
+                         (EventNode date1 (list event1 event2) 'Empty 'Empty)
+                         'Empty)))
+    
+;; (retrieve-event) fetches the list of events for the given date or '()
+(: retrieve-events : Date EventTree -> (Listof Event))
+(define (retrieve-events date tree)
+  (match tree
+    ['Empty '()]
+    [(EventNode date1 ls lsub rsub)
+        (cond
+          [(date<? date date1) (retrieve-events date lsub)]
+          [(date=? date date1) ls]
+          [else (retrieve-events date rsub)])]))
+
+(check-expect (retrieve-events date1 tree1) (list event1 event2))
+(check-expect (retrieve-events date2 tree1) (list event4 event5))
+(check-expect (retrieve-events date3 tree1) '())
+
+; draw-event-bar - new
+(: draw-event-bar : Date EventTree Byte -> Image)
+(define (draw-event-bar date tree size)
+    (foldr (λ ([x : Event][acc : Image])
+           (above
+            (circle 20 'solid 'white)
+            (rectangle size 5 'solid 'darkcyan)
+            (circle 10 'solid 'white)
+            (text (print-date date) size 'black)
+            (text (match x
+                    ['() "You Are Free Today!"]
+                    [(Event date time des)
+                     (string-append
+                      (match time
+                        ['all-day "(all-day)"]
+                        [(Time _ _ _)(print-time time)]
+                        [(Span a b)(string-append
+                                    (print-time a) "-"
+                                    (print-time b))])
+                      "\n" des)]) size 'black) acc))
+           empty-image (retrieve-events date tree)))
+
+
+
+
+
+
+
+
+
+
+; draw-month draws the base calendar
+(: draw-month :
+   CalFormat Integer Integer Date Date String Time EventTree -> Image) 
+(define
+  (draw-month format month year cal-date now-date now-date-str now-time tree)
+  (match format
+      [(CalFormat cell bg1 font1 height1 bg2 font2 height2 bg-cell font-cell)
+       ;-- define place-target
+       (local
+         {(define font-size (cast cell Byte))
+          (define hr (Time-hour now-time))
+          (define min (Time-minute now-time))
+          (define sec (Time-second now-time))
+          (define day (day-of-week (Date month 1 year)))
+          (define total-days (days-in-month month year))
+          (define place-target (overlay/xy
+             (square cell 'solid (color 0 0 0 0))
+             ;-- xy math
+             (* cell (+ (remainder (+ (Date-d now-date) day -1) 7)))
+             (+ (* cell (exact-floor (/ (+ (Date-d now-date) day -1) 7)))
+                (+ height1 height2))
+             ;-- target circle
+             (overlay/align "center" "center"
+                            (circle (/ cell 7) 'solid (color 0 0 0 20))
+                            (circle (/ cell 4) 'solid (color 0 0 0 15))
+                            (square cell 'solid (color 0 0 0 10)))))}
+         ;-- start overlay
+         (overlay/align "left" "top" place-target (beside/align "top"
+         ;-- left calendar
+         (above
+          (title-bar month year cell bg1 font1 height1 bg2 font2 height2)
+          (first-line day cell bg-cell font-cell)
+          (middle-lines day total-days cell bg-cell font-cell)
+          (last-line day total-days cell bg-cell font-cell)
+          (circle (/ cell 4) 'solid 'white)
+          (scale 0.4 (text/font now-date-str (cast cell Byte)
+                      "black" "Gill Sans" 'decorative 'normal 'light #f)))
+          ;-- right sidebar
+         (scale 0.27 
+                (above/align
+                 "right"
+                 (circle (/ cell ) 'solid 'white)
+                 (text/font (string-append "   " (print-date cal-date) )
+                            (cast cell Byte) "black" "Gill Sans"
+                            'modern 'normal 'bold #f)
+                 (text (string-append
+                        "   Time:  "
+                        (number->string
+                         (if (> hr 12) (- hr 12) hr)) ":"
+                        (number->string min) ":"
+                        (number->string sec) " "
+                        (if (> hr 12) "pm\n" "am\n")) (cast cell Byte)'black)
+                 (text/font "   Press '?' for Help\n[return] to enter event\n"
+                            (cast cell Byte)
+                            "black" "Gill Sans" 'script 'normal 'light #f)
+                 (draw-event-bar now-date tree font-size))))
+          ;-- background size 7 : 5
+        (rectangle (* 10 cell) (+ height1 height2 (* cell 7)) 'solid 'white)))]
+      [_ (error "wrong Calformat")]))
+
+
+
+
+
+
+
+
+; draw-enter-event draws the input event page
+(: draw-entry : CalFormat String (Optional Time) (Optional Time)
+   (U 'start 'end 'description) String -> Image)
+(define (draw-entry format notepad opt-start opt-end entry-mode now-str)
+  (match format
+    [(CalFormat cell bg1 font1 height1 bg2 font2 height2 bg-cell font-cell)
+     (local
+       {(: draw-textbox : String -> Image)
+        (define (draw-textbox str)
+          (above
+           (overlay/align
+            "left" "center"
+            (text str (cast cell Byte) 'black)
+            (rectangle (if (> (string-length str)20)
+                           (+ (* cell 10) (* 10 (- (string-length str) 20)))
+                           (* cell 10)) cell 'outline 'black)
+            (rectangle (if (> (string-length str) 20)
+                           (+ (* cell 10) (* 10 (- (string-length str) 20)))
+                           (* cell 10)) cell 'solid
+                                       (match str
+                                         ["" 'white]
+                                         [_ 'lavender])))
+           (circle (quotient cell 2) 'solid 'white)))}
+       (overlay/align/offset
+        "left" "top"
+        (scale 0.3
+         (above/align "left"           
+          (text/font "Entry Page\n" (cast cell Byte)
+                     "black" "Gill Sans" 'script 'normal 'bold #t)
+          (match entry-mode
+            ['start ;-- 1
+             (above/align
+              "left"
+              (text "Enter start time (esc to canel, ` to clear\n"
+                    (cast cell Byte) 'black)
+              (draw-textbox now-str)
+              (draw-textbox notepad))]
+            ['end ;-- 2
+             (above/align
+              "left"
+              (text "Enter end time (esc to canel, ` to clear\n"
+                    (cast cell Byte) 'black)
+                        (draw-textbox now-str)
+              (draw-textbox (match opt-start
+                              ['None " "]
+                              [(Some t) (print-time t)]))
+              (draw-textbox notepad))]
+            ['description ;-- 3
+             (above/align
+              "left"
+              (text "Enter description (esc to canel, ` to clear\n"
+                    (cast cell Byte) 'black)
+              (draw-textbox now-str)
+              (draw-textbox (match opt-start
+                              ['None " "]
+                              [(Some t) (print-time t)]))
+              (draw-textbox (match opt-end
+                              ['None " "]
+                              [(Some t) (print-time t)]))
+              (draw-textbox notepad))] )))
+        -20 -15
+        ;-- background size
+        (rectangle (* 10 cell) (+ height1 height2 (* cell 7))
+                   'solid 'white)))]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+; draw-menu draws the help-menu
+(: draw-menu : CalFormat -> Image)
+(define (draw-menu format)
+  (match format
+    [(CalFormat cell bg1 font1 height1 bg2 font2 height2 bg-cell font-cell)
+     (overlay/align/offset
+      "left" "top"
+      (scale 0.3
+             (above/align "left"
+              (text/font "Help\n" (cast cell Byte)
+                         "black" "Gill Sans" 'script 'normal 'bold #t)
+              (text "+ : Day Forward \n" (cast cell Byte) 'black)
+              (text "- : Day Backward \n" (cast cell Byte)'black)
+              (text "[right] : Month Forward \n" (cast cell Byte)'black)
+              (text "[left] : Month Backward \n" (cast cell Byte)'black)
+              (text "[up] : Year Forward \n" (cast cell Byte)'black)
+              (text "[down] : Year Backward \n" (cast cell Byte)'black)
+              (text "T : Reset to Current Date \n" (cast cell Byte)'black)
+              (text "? : Help" (cast cell Byte)'black)))
+      -20 -15
+      ;-- background size
+      (rectangle (* 10 cell) (+ height1 height2 (* cell 7)) 'solid 'white))]))
+
+;; draw-final is the final function that used in run 
+(: draw-final : CalWorld3 -> Image)
+(define (draw-final world)
+  (match world
+    [(CalWorld3 mode entry-mode format cal-date now-date now-str now-time
+                notepad opt-start opt-end tree)
+     (match mode
+       ['entry (draw-entry format notepad opt-start opt-end entry-mode now-str)]
+       ['help (draw-menu format)]
+       ['calendar
+        (match now-date
+          [(Date m d y)
+           (draw-month format m y cal-date now-date now-str now-time tree)])]
+       ['entry empty-image])]))
+
+(define world2 (CalWorld3 'entry 'description fmt1 date1 date1
+                          "Mon, March 1, 2021" time1
+                          "" 'None 'None tree1))
+
+(draw-final world2)
+
 
 
 
@@ -617,6 +804,49 @@
   (match world
     [(CalWorld3 mode entry-mode format cal-date now-date now-str now-time
                 notepad opt-start opt-end events)
+     (match mode
+       ['entry
+        (match key
+          ["\r"
+           (match entry-mode
+             ['start (CalWorld3 mode (match notepad
+                                       ["" 'description]
+                                       [_ 'end])
+                                format cal-date now-date
+                                now-str now-time ""
+                                (string->time notepad) opt-end events)]
+             ['end (CalWorld3 mode 'description format cal-date now-date
+                                now-str now-time ""
+                                opt-start (string->time notepad) events)]
+             ['description (CalWorld3 'calendar 'start format cal-date now-date
+                                now-str now-time ""
+                                opt-start opt-end
+                                (insert-event-tree
+                                 (match opt-start
+                                   ['None (Event now-date 'all-day notepad)]
+                                   [(Some n)
+                                    (match opt-end
+                                      ['None (Event now-date n notepad)]
+                                      [(Some m)(Event now-date (Span n m)
+                                                      notepad)])]) events))])]
+          ["escape" (CalWorld3 'calendar 'start
+                               format cal-date now-date
+                               now-str now-time ""
+                               'None 'None events)]
+          ["`" (CalWorld3 'entry 'start
+                               format cal-date now-date
+                               now-str now-time ""
+                               'None 'None events)]
+          ["shift" (CalWorld3 mode entry-mode
+                              format cal-date now-date
+                              now-str now-time notepad
+                              opt-start opt-end events)]
+          [n (CalWorld3 mode entry-mode
+                               format cal-date now-date
+                               now-str now-time (string-append notepad n)
+                               opt-start opt-end events)]
+          )]
+       [_
      (match now-date
        [(Date m d y)
         ;-- define plus minus functions
@@ -639,6 +869,15 @@
                    [else (Date m d (- y 1))]))}
         ;-- match key
         (match key
+          ["\r" (if (symbol=? mode 'calendar)
+                       (CalWorld3 'entry 'start
+                               format cal-date now-date
+                               now-str now-time ""
+                               'None 'None events)
+                       (CalWorld3 'calendar 'start
+                               format cal-date now-date
+                               now-str now-time ""
+                               'None 'None events))]
           ["+" (CalWorld3 mode entry-mode format cal-date
                           (tomorrow now-date)
                           (print-date (tomorrow now-date)) now-time
@@ -668,7 +907,7 @@
           ["escape" (CalWorld3 'calendar entry-mode format cal-date
                               now-date (print-date now-date) now-time
                               notepad opt-start opt-end events)]
-          [_ world]))])]))
+          [_ world]))])])]))
 ;; read-date-now and read-time-now reads the current date and time
 ;;      and return a Date and Time sturct
 (: read-date-now : -> Date)
@@ -729,7 +968,7 @@
 
 
 
-;(run fmt0 3 2021)
+(run fmt0 3 2021)
 
 
 (test)

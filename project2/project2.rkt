@@ -519,14 +519,14 @@
                          " " (Time 7 29 59)))
 
 (: read-date-now : -> Date)
-(define read-date-now (λ () (Date (date-month (current-date))
-                            (date-day (current-date))
-                            (date-year (current-date)))))
+(define (read-date-now) (Date (date-month (current-date))
+                              (date-day (current-date))
+                              (date-year (current-date))))
 
 (: read-time-now : -> Time)
-(define read-time-now (λ () (Time (date-hour (current-date))
-                            (date-minute (current-date))
-                            (date-second (current-date)))))
+(define (read-time-now) (Time (date-hour (current-date))
+                              (date-minute (current-date))
+                              (date-second (current-date))))
 
 ;; tick takes in a CalWorld and returns an updated one every second
 ;; tick updates the time continously

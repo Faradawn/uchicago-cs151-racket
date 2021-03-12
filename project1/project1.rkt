@@ -300,9 +300,9 @@
     [_ empty-image]))
 ;; tests of May. 2021, Sept 2021, and Nov. 2021
 (display "\n \n --- Three Holiday Tests --- \n \n")
-; (draw-month fmt0 5 2021)
-; (draw-month fmt0 9 2021)
-; (draw-month fmt0 11 2021)
+ (draw-month fmt0 5 2021)
+ (draw-month fmt0 9 2021)
+ (draw-month fmt0 11 2021)
 
 
 ; 6/6: draw-month
