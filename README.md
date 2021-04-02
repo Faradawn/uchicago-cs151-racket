@@ -1,6 +1,9 @@
 ![alt text][logo]
 [logo]: ./src/img/icon_faradawn.png
-# Hi. It is Nice to Meet You!
+# CMSC15100 Winter 2021 
+### Some notes on functional programming with Racket 
+
+
 
 ## My Question Board
 - [ ] Racket: how to do `not equal` `!=`?
@@ -12,23 +15,13 @@
 - [ ] Recket is there cli?  
 
 
-
 ## A Lovely Quote
 > "A thousand half-loves must be forsaken to take one whole heart home."  
 
 
 
-## Notes for  GitHub
-1. `git add .`
-2. `git commit -a -m " "`
-3. `git push -u origin`   
-
-
-
 ## More About Me
-My [`Personal Website`](https://www.faradawny.com)  
 My [`Video Space`] (https://space.bilibili.com/49683148)  
-Project [`Solved Chinese`](https://www.solvedchinese.org)  
 
 
 ___
